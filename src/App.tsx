@@ -1,19 +1,14 @@
-import { useState } from "react";
-import { CarritoComponent } from "./components/CarritoComponent";
-import { HeaderComponent } from "./components/HeaderComponent";
-import { ListadoProductosComponent } from "./components/ListadoProductosComponent";
+import { Chat } from "./components/Chat";
 
 function App() {
-  const [showCarrito, setShowCarrito] = useState(false);
   return (
     <div
       className="min-h-full bg-fixed"
       style={{ backgroundImage: "url(background.webp)" }}
     >
-      <HeaderComponent />
-      <div className="flex justify-center min-h-full">
-        <div className="max-w-lg w-full py-16">
-          {showCarrito ? <CarritoComponent /> : <ListadoProductosComponent />}
+      <div className="flex justify-center h-screen">
+        <div className="max-w-5xl w-full  h-full">
+          <Chat />
         </div>
       </div>
     </div>
