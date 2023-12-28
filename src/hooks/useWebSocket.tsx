@@ -6,6 +6,7 @@ const socket = io("http://localhost:3000");
 
 export const useMessages = () => {
   const [messages, setMessages] = useState<Message[] | undefined>(undefined);
+  const [status, setStatus] = useState<"idle" | "waiting" | "writing">("idle");
 
   const createNewChat = () => {
     const newId = uuidv4();
@@ -33,17 +34,51 @@ export const useMessages = () => {
 
   useEffect(() => {
     socket.on("new_message", (data: Message) => {
-      console.log("new_message", data);
-      setMessages((msg) => (msg ? [...msg, data] : [data]));
+      if (data.sender !== "System") {
+        setMessages((msg) => {
+          if (msg === undefined) {
+            return [data];
+          }
+          return [...msg, data];
+        });
+        return;
+      }
+      setStatus("writing");
+      let index = 0;
+      let interval = setInterval(() => {
+        setMessages((msg) => {
+          if (index === data.message.length) {
+            clearInterval(interval);
+            setStatus("idle");
+          }
+          const message = Array.from(data.message).splice(0, index).join("");
+          index += 1;
+          const nextMessage = {
+            ...data,
+            message,
+          };
+          if (msg === undefined) {
+            return [nextMessage];
+          }
+          if (msg[msg.length - 1].sender === "System") {
+            const messagesHead = msg.slice(0, msg.length - 1);
+            return [...messagesHead, nextMessage];
+          }
+          return [...msg, nextMessage];
+        });
+      }, 100);
     });
 
     initializeChat();
+
+    socket.on("writing", () => setStatus("waiting"));
+
     return () => {
       socket.off();
     };
   }, []);
 
-  return { messages, createNewChat, initializeChat, sendMessage };
+  return { messages, createNewChat, initializeChat, sendMessage, status };
 };
 
 type Message = {

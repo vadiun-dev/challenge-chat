@@ -2,7 +2,7 @@ import { ChangeEvent, FormEvent, ReactNode, useEffect, useState } from "react";
 import { useMessages } from "../hooks/useWebSocket";
 
 export const Chat = () => {
-  const { messages, initializeChat, sendMessage, createNewChat } =
+  const { messages, initializeChat, sendMessage, createNewChat, status } =
     useMessages();
   const [inputTextValue, setInputTextValue] = useState("");
 
@@ -38,7 +38,7 @@ export const Chat = () => {
 
   return (
     <ChatContainer>
-      <Header />
+      <Header status={status} />
       <MessagesContainer>
         {messages?.map((message, index) =>
           message.sender !== "System" ? (
@@ -49,6 +49,7 @@ export const Chat = () => {
         )}
       </MessagesContainer>
       <ChatTextInput
+        disabled={status !== "idle"}
         value={inputTextValue}
         onChange={(ev, value) => setInputTextValue(value)}
         onSubmit={handleSubmit}
@@ -76,14 +77,17 @@ const ChatTextInput = ({
   onChange,
   value,
   onSubmit,
+  disabled,
 }: {
   onChange: (ev: ChangeEvent<HTMLInputElement>, text: string) => void;
   value: string;
   onSubmit: (ev: FormEvent<HTMLFormElement>) => void;
+  disabled: boolean;
 }) => (
   <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
     <form className="relative flex" onSubmit={onSubmit}>
       <input
+        disabled={disabled}
         type="text"
         value={value}
         onChange={(ev) => onChange(ev, ev.target.value)}
@@ -93,6 +97,7 @@ const ChatTextInput = ({
       <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
         <button
           type="submit"
+          disabled={disabled}
           className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
         >
           <span className="font-bold">Send</span>
@@ -110,7 +115,7 @@ const ChatTextInput = ({
   </div>
 );
 
-const Header = () => (
+const Header = ({ status }: { status: "idle" | "writing" | "waiting" }) => (
   <div className="flex sm:items-center justify-between py-3 border-b-2 border-gray-200">
     <div className="relative flex items-center space-x-4">
       <div className="relative">
@@ -130,6 +135,7 @@ const Header = () => (
           <span className="text-gray-700 mr-3">Anderson Vanhron</span>
         </div>
         <span className="text-lg text-gray-600">Junior Developer</span>
+        <span> {status === "waiting" ? "Writing..." : "Live"} </span>
       </div>
     </div>
   </div>
