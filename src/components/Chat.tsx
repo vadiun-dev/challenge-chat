@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, ReactNode, useEffect, useState } from "react";
+import { ChangeEvent, ReactNode, useEffect, useState } from "react";
 import { useMessages } from "../hooks/useWebSocket";
 
 export const Chat = () => {
@@ -17,10 +17,8 @@ export const Chat = () => {
     }
   }, [messages?.length]);
 
-  const handleSubmit = (ev: FormEvent<HTMLFormElement>) => {
-    ev.preventDefault();
+  const handleSubmit = () => {
     sendMessage(inputTextValue);
-    setInputTextValue("");
   };
 
   if (messages?.length === 0) {
@@ -40,16 +38,15 @@ export const Chat = () => {
     <ChatContainer>
       <Header status={status} />
       <MessagesContainer>
-        {messages?.map((message, index) =>
-          message.sender !== "System" ? (
-            <MyMessage key={message.id} text={message.message} />
-          ) : (
-            <HitMessages key={message.id} text={message.message} />
-          )
-        )}
+        {messages?.map((message) => (
+          <MyMessage
+            key={message.id}
+            text={message.message}
+            reversed={message.sender === "System"}
+          />
+        ))}
       </MessagesContainer>
       <ChatTextInput
-        disabled={status !== "idle"}
         value={inputTextValue}
         onChange={(ev, value) => setInputTextValue(value)}
         onSubmit={handleSubmit}
@@ -77,17 +74,14 @@ const ChatTextInput = ({
   onChange,
   value,
   onSubmit,
-  disabled,
 }: {
   onChange: (ev: ChangeEvent<HTMLInputElement>, text: string) => void;
   value: string;
-  onSubmit: (ev: FormEvent<HTMLFormElement>) => void;
-  disabled: boolean;
+  onSubmit: () => void;
 }) => (
   <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
-    <form className="relative flex" onSubmit={onSubmit}>
+    <div className="relative flex">
       <input
-        disabled={disabled}
         type="text"
         value={value}
         onChange={(ev) => onChange(ev, ev.target.value)}
@@ -96,8 +90,8 @@ const ChatTextInput = ({
       />
       <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
         <button
-          type="submit"
-          disabled={disabled}
+          type="button"
+          onClick={onSubmit}
           className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
         >
           <span className="font-bold">Send</span>
@@ -111,7 +105,7 @@ const ChatTextInput = ({
           </svg>
         </button>
       </div>
-    </form>
+    </div>
   </div>
 );
 
@@ -124,10 +118,10 @@ const Header = ({ status }: { status: "idle" | "writing" | "waiting" }) => (
             <circle cx="8" cy="8" r="8" fill="currentColor"></circle>
           </svg>
         </span>
-        <img
+        <Avatar
+          showLiveIndicator
+          size="large"
           src="https://images.unsplash.com/photo-1549078642-b2ba4bda0cdb?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=3&amp;w=144&amp;h=144"
-          alt=""
-          className="w-10 sm:w-16 h-10 sm:h-16 rounded-full"
         />
       </div>
       <div className="flex flex-col leading-tight">
@@ -141,40 +135,56 @@ const Header = ({ status }: { status: "idle" | "writing" | "waiting" }) => (
   </div>
 );
 
-const MyMessage = ({ text }: { text: string }) => (
+const MyMessage = ({ text, reversed }: { text: string; reversed: boolean }) => (
   <div className="chat-message">
-    <div className="flex items-end justify-end">
-      <div className="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-1 items-end">
+    <div className={`flex items-end ${!reversed ? "justify-end" : ""}`}>
+      <div
+        className={`flex flex-col space-y-2 text-xs max-w-xs mx-2 ${
+          reversed ? "order-2 items-start" : "order-1 items-end"
+        }`}
+      >
         <div>
-          <span className="px-4 py-2 rounded-lg inline-block rounded-br-none bg-blue-600 text-white ">
+          <span
+            className={`px-4 py-2 rounded-lg inline-block rounded-br-none ${
+              reversed ? "bg-gray-300 text-gray-600" : "bg-blue-600 text-white "
+            } `}
+          >
             {text}
           </span>
         </div>
       </div>
-      <img
-        src="https://images.unsplash.com/photo-1590031905470-a1a1feacbb0b?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=3&amp;w=144&amp;h=144"
-        alt="My profile"
-        className="w-6 h-6 rounded-full order-2"
-      />
+      <div className={`${reversed ? "order-1" : "order-2"}`}>
+        <Avatar
+          size="small"
+          showLiveIndicator={false}
+          src="https://images.unsplash.com/photo-1590031905470-a1a1feacbb0b?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=3&amp;w=144&amp;h=144"
+        />
+      </div>
     </div>
   </div>
 );
 
-const HitMessages = ({ text }: { text: string }) => (
-  <div className="chat-message">
-    <div className="flex items-end">
-      <div className="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-2 items-start">
-        <div>
-          <span className="px-4 py-2 rounded-lg inline-block rounded-bl-none bg-gray-300 text-gray-600">
-            {text}
-          </span>
-        </div>
-      </div>
-      <img
-        src="https://images.unsplash.com/photo-1549078642-b2ba4bda0cdb?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=3&amp;w=144&amp;h=144"
-        alt="My profile"
-        className="w-6 h-6 rounded-full order-1"
-      />
-    </div>
+const Avatar = ({
+  src,
+  showLiveIndicator,
+  size,
+}: {
+  src: string;
+  showLiveIndicator: boolean;
+  size: "small" | "large";
+}) => (
+  <div className="relative">
+    {showLiveIndicator && (
+      <span className="absolute text-green-500 right-0 bottom-0">
+        <svg width="20" height="20">
+          <circle cx="8" cy="8" r="8" fill="currentColor"></circle>
+        </svg>
+      </span>
+    )}
+    <img
+      src={src}
+      alt=""
+      className={"rounded-full " + (size === "small" ? "w-6 h-6" : "w-16 h-16")}
+    />
   </div>
 );
